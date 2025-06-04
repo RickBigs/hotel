@@ -6,6 +6,15 @@ $start = date('Y-m-d', strtotime($oggi.' -'.(date('N', strtotime($oggi))-1).' da
 $giorni = [];
 for($i=0;$i<7;$i++) $giorni[] = date('Y-m-d', strtotime("$start +$i days"));
 $camere = $conn->query("SELECT * FROM camere ORDER BY numero");
+
+// Funzione helper per generare il contenuto della prenotazione
+function renderPrenotazioneInfo($pren) {
+    if(!$pren) return '';
+    return '<div class="pren-info-small">
+                <span class="pren-id-small">' . $pren['id_prenotazione'] . '</span><br>
+                <span class="pren-nome">' . htmlspecialchars($pren['nome'] . ' ' . $pren['cognome']) . '</span>
+            </div>';
+}
 ?>
 <!DOCTYPE html>
 <html lang="it">
@@ -31,27 +40,74 @@ $camere = $conn->query("SELECT * FROM camere ORDER BY numero");
     <?php while($c = $camere->fetch_assoc()): ?>
     <tr>
         <td><?php echo $c['numero']; ?></td>
-        <?php foreach($giorni as $g): ?>
-            <?php
-            $idc = $c['id_camera'];
-            // Metà sinistra: partenza (notte precedente termina qui)
-            $q_left = $conn->query("SELECT p.id_prenotazione, cl.nome, cl.cognome FROM prenotazioni_camere pc JOIN prenotazioni p ON pc.id_prenotazione = p.id_prenotazione JOIN clienti cl ON p.id_cliente = cl.id_cliente WHERE pc.id_camera = $idc AND p.data_partenza = '$g' AND p.stato = 'confermata'");
-            $left = $q_left->fetch_assoc();
-            // Metà destra: arrivo (notte inizia qui)
-            $q_right = $conn->query("SELECT p.id_prenotazione, cl.nome, cl.cognome FROM prenotazioni_camere pc JOIN prenotazioni p ON pc.id_prenotazione = p.id_prenotazione JOIN clienti cl ON p.id_cliente = cl.id_cliente WHERE pc.id_camera = $idc AND p.data_arrivo = '$g' AND p.stato = 'confermata'");
-            $right = $q_right->fetch_assoc();
-            // Casella di fermata: la camera è occupata se esiste una prenotazione che include questa data come notte di permanenza
-            $q_stay = $conn->query("SELECT p.id_prenotazione, cl.nome, cl.cognome FROM prenotazioni_camere pc JOIN prenotazioni p ON pc.id_prenotazione = p.id_prenotazione JOIN clienti cl ON p.id_cliente = cl.id_cliente WHERE pc.id_camera = $idc AND p.data_arrivo < '$g' AND p.data_partenza > '$g' AND p.stato = 'confermata'");
-            $stay = $q_stay->fetch_assoc();
+        <?php 
+        $idc = $c['id_camera'];
+        
+        // Ottieni tutte le prenotazioni che interessano questa settimana per questa camera
+        $prenotazioni_settimana = [];
+        $q_pren = $conn->query("SELECT p.id_prenotazione, p.data_arrivo, p.data_partenza, cl.nome, cl.cognome 
+                               FROM prenotazioni_camere pc 
+                               JOIN prenotazioni p ON pc.id_prenotazione = p.id_prenotazione 
+                               JOIN clienti cl ON p.id_cliente = cl.id_cliente 
+                               WHERE pc.id_camera = $idc 
+                               AND p.stato = 'confermata' 
+                               AND p.data_arrivo <= '" . end($giorni) . "' 
+                               AND p.data_partenza >= '" . reset($giorni) . "'");
+        
+        while($pren = $q_pren->fetch_assoc()) {
+            $prenotazioni_settimana[] = $pren;
+        }
+        
+        foreach($giorni as $g): 
+            // Trova prenotazioni per questo giorno
+            $stato_giorno = [
+                'partenza' => null,
+                'arrivo' => null,
+                'soggiorno' => null
+            ];
+            
+            foreach($prenotazioni_settimana as $pren) {
+                if($pren['data_partenza'] == $g) {
+                    $stato_giorno['partenza'] = $pren;
+                }
+                if($pren['data_arrivo'] == $g) {
+                    $stato_giorno['arrivo'] = $pren;
+                }
+                if($pren['data_arrivo'] < $g && $pren['data_partenza'] > $g) {
+                    $stato_giorno['soggiorno'] = $pren;
+                }
+            }
+            
+            // Determina la prenotazione attiva e il tipo di blocco
+            $prenotazione_attiva = $stato_giorno['arrivo'] ?: $stato_giorno['soggiorno'] ?: $stato_giorno['partenza'];
+            
+            $blocco_class = '';
+            if($prenotazione_attiva) {
+                $blocco_class = 'occupata';
+                if($stato_giorno['arrivo'] && !$stato_giorno['partenza']) {
+                    $blocco_class .= ' blocco-inizio';
+                } elseif($stato_giorno['partenza'] && !$stato_giorno['arrivo']) {
+                    $blocco_class .= ' blocco-fine';
+                } elseif($stato_giorno['arrivo'] && $stato_giorno['partenza']) {
+                    $blocco_class .= ' blocco-singolo';
+                } elseif($stato_giorno['soggiorno']) {
+                    $blocco_class .= ' blocco-mezzo';
+                }
+            }
+            
+            // Determina quale prenotazione mostrare in ogni metà
+            $pren_left = $stato_giorno['partenza'] ?: $stato_giorno['soggiorno'];
+            $pren_right = $stato_giorno['arrivo'] ?: $stato_giorno['soggiorno'];
             ?>
-            <td class="cella-split">
-                <div class="half left <?php echo ($left || $stay) ? 'occupata' : 'libera'; ?>">
-                    <?php if($left) echo $left['id_prenotazione'] . '<br>' . htmlspecialchars($left['nome']) . ' ' . htmlspecialchars($left['cognome']);
-                    elseif($stay) echo $stay['id_prenotazione'] . '<br>' . htmlspecialchars($stay['nome']) . ' ' . htmlspecialchars($stay['cognome']); ?>
+            <td class="cella-split <?php echo $blocco_class; ?>" 
+                <?php if($prenotazione_attiva): ?>
+                data-prenotazione="<?php echo $prenotazione_attiva['id_prenotazione']; ?>"
+                <?php endif; ?>>
+                <div class="half left <?php echo $pren_left ? 'occupata' : 'libera'; ?>">
+                    <?php echo renderPrenotazioneInfo($pren_left); ?>
                 </div>
-                <div class="half right <?php echo ($right || $stay) ? 'occupata' : 'libera'; ?>">
-                    <?php if($right) echo $right['id_prenotazione'] . '<br>' . htmlspecialchars($right['nome']) . ' ' . htmlspecialchars($right['cognome']);
-                    elseif($stay) echo $stay['id_prenotazione'] . '<br>' . htmlspecialchars($stay['nome']) . ' ' . htmlspecialchars($stay['cognome']); ?>
+                <div class="half right <?php echo $pren_right ? 'occupata' : 'libera'; ?>">
+                    <?php echo renderPrenotazioneInfo($pren_right); ?>
                 </div>
             </td>
         <?php endforeach; ?>
