@@ -1,0 +1,122 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f7f7f7;
+    margin: 0;
+    padding: 0;
+}
+h1 {
+    background: #2d6a4f;
+    color: #fff;
+    padding: 20px;
+    margin: 0 0 20px 0;
+    text-align: center;
+}
+table {
+    border-collapse: collapse;
+    width: 90%;
+    margin: 20px auto;
+    background: #fff;
+    box-shadow: 0 2px 8px #ccc;
+}
+th, td {
+    border: 1px solid #ccc;
+    padding: 8px 12px;
+    text-align: center;
+}
+th {
+    background: #40916c;
+    color: #fff;
+}
+tr:nth-child(even) { background: #f1f1f1; }
+tr:hover { background: #e9ffe9; }
+.tableau td.libera {
+    background: #b7e4c7;
+}
+.tableau td.occupata {
+    background: #ff6b6b;
+    color: #fff;
+}
+button, input[type="submit"] {
+    background: #40916c;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+button:hover, input[type="submit"]:hover {
+    background: #2d6a4f;
+}
+input[type="date"] {
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+.navbar {
+    background: #40916c;
+    padding: 10px 0;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.navbar a {
+    color: #fff;
+    text-decoration: none;
+    margin: 0 20px;
+    font-weight: bold;
+    font-size: 1.1em;
+    transition: color 0.2s;
+}
+.navbar a:hover {
+    color: #b7e4c7;
+}
+.cella-split {
+    position: relative;
+    width: 90px;
+    height: 48px;
+    padding: 0;
+}
+.cella-split .half {
+    position: absolute;
+    width: 50%;
+    height: 100%;
+    top: 0;
+    font-size: 0.8em;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2px;
+    box-sizing: border-box;
+}
+.cella-split .left {
+    left: 0;
+    border-right: 1px solid #fff;
+    border-radius: 6px 0 0 6px;
+}
+.cella-split .right {
+    right: 0;
+    border-left: 1px solid #fff;
+    border-radius: 0 6px 6px 0;
+}
+.cella-split .occupata {
+    background: #ff6b6b;
+    color: #fff;
+    position: relative;
+}
+.cella-split .libera {
+    background: #b7e4c7;
+    color: #222;
+}
+.block-prenotazione {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 0.95em;
+    color: #fff;
+    background: transparent;
+}
