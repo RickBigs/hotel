@@ -2,9 +2,11 @@
 // tableau.php
 include 'connessione.php';
 $oggi = isset($_GET['data']) ? $_GET['data'] : date('Y-m-d');
-$start = date('Y-m-d', strtotime($oggi.' -'.(date('N', strtotime($oggi))-1).' days'));
+// Calcola la data di inizio: 2 giorni prima della data selezionata
+$start = date('Y-m-d', strtotime($oggi.' -2 days'));
 $giorni = [];
-for($i=0;$i<7;$i++) $giorni[] = date('Y-m-d', strtotime("$start +$i days"));
+// Crea un array di 10 giorni: -2, -1, oggi, +1, +2, +3, +4, +5, +6, +7
+for($i=0;$i<10;$i++) $giorni[] = date('Y-m-d', strtotime("$start +$i days"));
 $camere = $conn->query("SELECT * FROM camere ORDER BY numero");
 
 // Funzione helper per generare il contenuto della prenotazione
@@ -25,16 +27,46 @@ function renderPrenotazioneInfo($pren) {
 </head>
 <body>
 <?php include 'header.php'; ?>
-<h1>Tableau settimanale camere</h1>
-<form method="get">
-    <input type="date" name="data" value="<?php echo htmlspecialchars($oggi); ?>">
-    <button type="submit">Vai alla settimana</button>
-</form>
-<table class="tableau">
-    <tr>
-        <th>Camera</th>
-        <?php foreach($giorni as $g): ?>
-            <th><?php echo date('D d/m', strtotime($g)); ?></th>
+<h1>Tableau camere (10 giorni: -2/+7)</h1>
+<div class="navigation-controls">
+    <form method="get" style="display: inline-block;">
+        <input type="hidden" name="data" value="<?php echo date('Y-m-d', strtotime($oggi.' -1 day')); ?>">
+        <button type="submit">← Giorno precedente</button>
+    </form>
+    
+    <form method="get" style="display: inline-block; margin: 0 20px;">
+        <input type="date" name="data" value="<?php echo htmlspecialchars($oggi); ?>">
+        <button type="submit">Vai alla data</button>
+    </form>
+    
+    <form method="get" style="display: inline-block;">
+        <input type="hidden" name="data" value="<?php echo date('Y-m-d', strtotime($oggi.' +1 day')); ?>">
+        <button type="submit">Giorno successivo →</button>
+    </form>
+    
+    <form method="get" style="display: inline-block; margin-left: 20px;">
+        <input type="hidden" name="data" value="<?php echo date('Y-m-d'); ?>">
+        <button type="submit" style="background: #2d6a4f;">Oggi</button>
+    </form>
+</div>
+<p style="text-align: center; font-weight: bold; color: #2d6a4f;">
+    Data centrale: <?php echo date('d/m/Y', strtotime($oggi)); ?> 
+    (dal <?php echo date('d/m/Y', strtotime($start)); ?> al <?php echo date('d/m/Y', strtotime(end($giorni))); ?>)
+</p>
+<table class="tableau">    <tr>
+        <th style="width: 80px;">Camera</th>
+        <?php foreach($giorni as $index => $g): 
+            $is_oggi = ($g == date('Y-m-d'));
+            $is_centrale = ($g == $oggi);
+            $day_class = '';
+            if($is_oggi) $day_class .= ' oggi';
+            if($is_centrale) $day_class .= ' centrale';
+        ?>
+            <th class="<?php echo $day_class; ?>" style="<?php echo $is_oggi ? 'background: #d63031; color: white;' : ($is_centrale ? 'background: #2d6a4f; color: white;' : ''); ?>">
+                <?php echo date('D d/m', strtotime($g)); ?>
+                <?php if($is_oggi): ?><br><small>(OGGI)</small><?php endif; ?>
+                <?php if($is_centrale && !$is_oggi): ?><?php endif; ?>
+            </th>
         <?php endforeach; ?>
     </tr>
     <?php while($c = $camere->fetch_assoc()): ?>
@@ -43,7 +75,7 @@ function renderPrenotazioneInfo($pren) {
         <?php 
         $idc = $c['id_camera'];
         
-        // Ottieni tutte le prenotazioni che interessano questa settimana per questa camera
+        // Ottieni tutte le prenotazioni che interessano questo periodo per questa camera
         $prenotazioni_settimana = [];
         $q_pren = $conn->query("SELECT p.id_prenotazione, p.data_arrivo, p.data_partenza, cl.nome, cl.cognome 
                                FROM prenotazioni_camere pc 
@@ -53,8 +85,7 @@ function renderPrenotazioneInfo($pren) {
                                AND p.stato = 'confermata' 
                                AND p.data_arrivo <= '" . end($giorni) . "' 
                                AND p.data_partenza >= '" . reset($giorni) . "'");
-        
-        while($pren = $q_pren->fetch_assoc()) {
+          while($pren = $q_pren->fetch_assoc()) {
             $prenotazioni_settimana[] = $pren;
         }
         
@@ -110,7 +141,7 @@ function renderPrenotazioneInfo($pren) {
                     <?php echo renderPrenotazioneInfo($pren_right); ?>
                 </div>
             </td>
-        <?php endforeach; ?>
+        <?php endforeach;?>
     </tr>
     <?php endwhile; ?>
 </table>

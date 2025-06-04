@@ -90,10 +90,20 @@ input[type="date"] {
 /* Stili per celle divise */
 .cella-split {
     position: relative;
-    width: 90px;
+    width: 80px;
     height: 56px;
     padding: 0;
     border: 1px solid #ccc;
+}
+
+/* Adattamento per tabelle con più colonne */
+.tableau {
+    font-size: 0.9em;
+}
+
+.tableau th, .tableau td {
+    padding: 4px 2px;
+    font-size: 0.85em;
 }
 
 /* Stili per blocchi di prenotazione */
@@ -171,14 +181,84 @@ input[type="date"] {
     text-align: center;
     line-height: 1;
     width: 100%;
+    font-size: 0.7em;
 }
 
 .pren-id-small {
     font-weight: bold;
     font-size: 0.8em;
+    display: block;
+    margin-bottom: 1px;
+}
+
+.pren-nome {
+    font-size: 0.7em;
+    line-height: 1.1;
+}
+
+/* Responsive per tableau con molte colonne */
+@media (max-width: 1200px) {
+    .tableau {
+        font-size: 0.8em;
+    }
+    
+    .cella-split {
+        width: 70px;
+        height: 48px;
+    }
+    
+    .pren-info-small {
+        font-size: 0.65em;
+    }
 }
 
 .azione {
     font-size: 0.7em;
     font-weight: bold;
+}
+
+/* Controlli di navigazione */
+.navigation-controls {
+    text-align: center;
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.navigation-controls form {
+    display: inline-block;
+    margin: 0 5px;
+}
+
+.navigation-controls button {
+    padding: 8px 15px;
+    margin: 0 5px;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.navigation-controls button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Stili per intestazioni colonne con date speciali */
+.tableau th.oggi {
+    background: #d63031 !important;
+    color: white !important;
+    font-weight: bold;
+}
+
+.tableau th.centrale {
+    background: #ff0909 !important;
+    color: white !important;
+    font-weight: bold;
+}
+
+.tableau th small {
+    font-size: 0.7em;
+    font-weight: normal;
 }
