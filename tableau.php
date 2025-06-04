@@ -27,7 +27,7 @@ function renderPrenotazioneInfo($pren) {
 </head>
 <body>
 <?php include 'header.php'; ?>
-<h1>Tableau camere (10 giorni: -2/+7)</h1>
+<h1>Tableau camere</h1>
 <div class="navigation-controls">
     <form method="get" style="display: inline-block;">
         <input type="hidden" name="data" value="<?php echo date('Y-m-d', strtotime($oggi.' -1 day')); ?>">
@@ -53,7 +53,8 @@ function renderPrenotazioneInfo($pren) {
     Data centrale: <?php echo date('d/m/Y', strtotime($oggi)); ?> 
     (dal <?php echo date('d/m/Y', strtotime($start)); ?> al <?php echo date('d/m/Y', strtotime(end($giorni))); ?>)
 </p>
-<table class="tableau">    <tr>
+<table class="tableau">    
+    <tr>
         <th style="width: 80px;">Camera</th>
         <?php foreach($giorni as $index => $g): 
             $is_oggi = ($g == date('Y-m-d'));
